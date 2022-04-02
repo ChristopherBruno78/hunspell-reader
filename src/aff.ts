@@ -1,9 +1,9 @@
 import * as util from 'util';
-import { Converter } from './converter';
-import { genSequence as gs, Sequence } from 'gensequence';
+import {Converter} from './converter';
 import * as GS from 'gensequence';
-import { Mapping } from './types';
-import { filterOrderedList } from './util';
+import {genSequence as gs, Sequence} from 'gensequence';
+import {Mapping} from './types';
+import {filterOrderedList} from './util';
 
 const log = false;
 
@@ -229,6 +229,13 @@ export class Aff {
         this._maxSuffixDepth = value;
     }
 
+    applyNoSuggest(affWord: AffWord, rules) : string {
+        if(rules.indexOf("!") > 0) {
+            return this._oConv.convert(affWord.word)+"/!";
+        }
+        return this._oConv.convert(affWord.word);
+    }
+
     /**
      * Takes a line from a hunspell.dic file and applies the rules found in the aff file.
      * For performance reasons, only the `word` field is mapped with OCONV.
@@ -240,11 +247,10 @@ export class Aff {
         const [word, rules = ''] = lineLeft.split('/', 2);
         const results = this.applyRulesToWord(asAffWord(word, rules), maxSuffixDepth).map((affWord) => ({
             ...affWord,
-            word: this._oConv.convert(affWord.word),
+            word: this.applyNoSuggest(affWord, rules),
         }));
         results.sort(compareAff);
-        const filtered = results.filter(filterAff());
-        return filtered;
+        return results.filter(filterAff());
     }
 
     /**
@@ -424,7 +430,7 @@ const flagToStringMap: Mapping<AffWordFlags, string> = {
     isKeepCase: 'K',
     isForceUCase: 'U',
     isForbiddenWord: 'F',
-    isNoSuggest: 'N',
+    isNoSuggest: '!',
     isNeedAffix: 'A',
     isCompoundForbidden: '-',
 };
